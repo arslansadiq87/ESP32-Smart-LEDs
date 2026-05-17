@@ -1,0 +1,33 @@
+type: vertical-stack
+cards:
+  - type: entities
+    title: RGB Controller
+    show_header_toggle: false
+    entities:
+      - entity: sensor.rgb_controller_status
+        name: Controller IP
+      - entity: select.rgb_pattern
+        name: Pattern
+  - type: light
+    entity: light.rgb_lights
+    name: RGB Lights
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Pick Color
+        icon: mdi:palette
+        show_state: false
+        icon_height: 24px
+        tap_action:
+          action: more-info
+          entity: light.rgb_lights
+      - type: button
+        name: Save
+        icon: mdi:content-save
+        show_state: false
+        icon_height: 24px
+        tap_action:
+          action: perform-action
+          perform_action: rest_command.rgb_save
+          confirmation:
+            text: Save the current RGB state to the ESP32?
