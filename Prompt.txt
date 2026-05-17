@@ -1,0 +1,131 @@
+Create a complete PlatformIO project named ESP32-Smart-LEDs exactly like my uploaded project.
+
+Goal:
+Build an ESP32 Smart LED controller using FastLED with a modern web dashboard, LittleFS UI, OTA firmware upload, mDNS, multi-zone LED control, saved settings, and HomeKit/Home Assistant style API compatibility.
+
+Project structure:
+- platformio.ini
+- src/main.cpp
+- data/index.html
+- data/assets/app.css
+- data/assets/app.js
+- include/README
+- lib/README
+- test/README
+- .gitignore
+
+PlatformIO:
+Use:
+[env:featheresp32]
+platform = espressif32@6.8.0
+board = featheresp32
+framework = arduino
+monitor_speed = 115200
+board_build.filesystem = littlefs
+
+Libraries:
+- fastled/FastLED@3.6.0
+- bblanchon/ArduinoJson@^7
+
+Build flags:
+- -DFASTLED_INTERNAL
+- -Os
+- -DARDUINO_JSON_DOCUMENT_SIZE=1024
+- -DARDUINO_JSON_ARRAY_SIZE=64
+- -DARDUINO_JSON_OBJECT_SIZE=32
+
+Firmware requirements:
+Use Arduino framework and include:
+WiFi, WebServer, UriBraces, FastLED, Preferences, ESPmDNS, WiFiUdp, ArduinoJson, FS, LittleFS, Update.
+
+Create 5 LED zones:
+1. Wall        GPIO 5   120 LEDs
+2. Monitors    GPIO 19   90 LEDs
+3. PC Case     GPIO 18   60 LEDs
+4. Ceiling     GPIO 23  150 LEDs
+5. Moon Globe  GPIO 21   30 LEDs
+
+Use:
+LED_TYPE WS2812B
+COLOR_ORDER GRB
+MAX_ZONES 5
+MAX_PER_ZONE 600
+Brightness must be capped internally to 95, but expose brightness_pct and brightness_ha for UI/Home Assistant compatibility.
+
+WiFi:
+- STA credentials placeholders: YourSSID / YourWIFIPassword
+- AP fallback: ESP32-LED / 12345678
+- mDNS host: rgb
+- Serve dashboard at http://rgb.local/
+
+Persistence:
+Use Preferences namespace ledctrl.
+Save per-zone:
+on, LED count, brightness, frame speed, pattern index, color, last nonzero brightness.
+
+HTTP routes:
+- GET / serves LittleFS /index.html
+- GET /api/status and /status return JSON with IP, patterns, all zones summary, and zone states
+- GET/POST /api/cmd and /cmd accept JSON or query params
+- POST /api/save saves Preferences
+- GET /api/fs lists LittleFS files
+- POST /update performs HTTP OTA firmware update
+- GET /health returns {"ok":true}
+- HomeKit style:
+  GET /homekit/zones
+  GET /homekit/zone/{id}
+  POST /homekit/zone/{id}
+
+Command API must support:
+- all:true or zone:id
+- cmd:"ON"/"OFF"
+- on:true/false
+- power:1/0
+- state:"on"/"off"
+- pat or pattern by name/index
+- col or color as hex
+- rgb or rgb_color array
+- r/g/b
+- bri or brightness 0–95
+- brightness_pct 0–100
+- brightness_ha 0–255
+- hue degrees
+- saturation percent
+- spd or speed 1–200
+- count LED count
+
+Patterns:
+Implement these FastLED patterns exactly as named:
+SOLID, RAINBOW, RAINBOW_GLITTER, CONFETTI, SINELON, JUGGLE, BPM, THEATER, TWINKLE, BREATHE, COMET, RIPPLE, METEOR, LARSON, GRAD_SCROLL, PALETTE_CYCLE, RAINBOW_BEAT, POLICE, FIRE, NOISE_COLORWAVES, PLASMA, CHASE, CHASE_DUAL, GLITTER, CANDLE, WAVE, BEAT_BARS, STARS, NEON_PULSE, HOLOGRAM, SCANLINES, FIREFLIES, FIREWORKS, DUAL_COMET, WAVE_MONO, WAVE_RAINBOW, WAVE_DUAL.
+
+Main loop:
+- handle web server client
+- run selected pattern per zone based on frameMs timing
+- call each zone controller showLeds(brightness) only when zone is on
+- turn zone black when off
+- use FastLED power limiter for 5V supply
+
+Dashboard:
+Create a modern dark neon glass UI.
+It must:
+- fetch /api/status
+- show online/IP/time
+- show active zones, current pattern, brightness
+- create an “All Zones” control card
+- create one card per zone
+- allow ON/OFF, pattern select, color picker, brightness slider, speed slider, LED count slider
+- send commands to /api/cmd as JSON
+- debounce slider updates
+- save settings using /api/save
+- show toast messages
+- be responsive for mobile and desktop
+
+Important:
+Do not create placeholder firmware.
+Write the full working code.
+Do not use Arduino IDE style project.
+Use PlatformIO only.
+After creating files, run:
+pio run
+pio run -t buildfs
+Fix all compile errors before finishing.

@@ -1,0 +1,647 @@
+/* Neon glass dashboard (inspired by the sample UI) */
+:root{
+  --bg0:#07090e;
+  --bg1:#0b1020;
+  --card:rgba(20,26,38,.55);
+  --card2:rgba(20,26,38,.35);
+  --stroke:rgba(255,255,255,.08);
+  --stroke2:rgba(255,255,255,.12);
+  --text:#e8ecf8;
+  --mut:#9aa6b7;
+  --good:#29f2a6;
+  --info:#4cc3ff;
+  --warn:#ffcc66;
+  --bad:#ff4d6d;
+  --glow:0 0 18px rgba(76,195,255,.25), 0 0 44px rgba(41,242,166,.12);
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color:var(--text);
+  background: radial-gradient(1200px 700px at 18% 10%, #122458 0%, transparent 55%),
+              radial-gradient(1000px 500px at 80% 20%, #0f4b36 0%, transparent 55%),
+              radial-gradient(900px 600px at 50% 90%, #2b124a 0%, transparent 55%),
+              linear-gradient(180deg, var(--bg0), var(--bg1));
+  overflow-x:hidden;
+}
+.bg{
+  position:fixed; inset:0;
+  background:
+    radial-gradient(600px 300px at 22% 30%, rgba(76,195,255,.10), transparent 60%),
+    radial-gradient(520px 260px at 75% 35%, rgba(41,242,166,.10), transparent 60%),
+    radial-gradient(520px 260px at 55% 85%, rgba(190,90,255,.10), transparent 60%);
+  filter: blur(0px);
+  pointer-events:none;
+}
+
+a{color:inherit}
+.muted{color:var(--mut)}
+
+.topbar{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 22px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  background:rgba(5,8,14,.40);
+  backdrop-filter: blur(14px);
+}
+
+.title .brand{font-size:18px; font-weight:750; letter-spacing:.3px}
+.title .subtitle{margin-top:2px; font-size:12px; color:var(--mut)}
+.status{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap: nowrap;      /* keep in one row */
+  white-space: nowrap;
+}
+.status .pill{flex:0 0 auto;}
+#tbTime{
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip{
+  display:flex; gap:10px; align-items:center;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.09);
+  background:rgba(20,26,38,.40);
+  border-radius:999px;
+}
+.dot{width:10px; height:10px; border-radius:999px; background:var(--warn); box-shadow: var(--glow)}
+.dot.ok{background:var(--good)}
+.dot.bad{background:var(--bad)}
+
+.wrap{
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 28px 18px;
+}
+
+
+.hero{
+  display:grid; grid-template-columns: 1.25fr .75fr;
+  gap:16px;
+  margin:16px 0 18px;
+}
+.hero-left,
+.hero-right{
+  border:1px solid var(--stroke);
+  background:linear-gradient(180deg, rgba(20,26,38,.62), rgba(20,26,38,.34));
+  border-radius:var(--radius);
+  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  backdrop-filter: blur(16px);
+  overflow:hidden;
+}
+.hero-left{padding:18px}
+.hero-right{
+  display:grid;
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.hero-icon{
+  width:76px; height:76px;
+  border-radius:22px;
+  background:linear-gradient(135deg, rgba(76,195,255,.20), rgba(41,242,166,.12));
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow: var(--glow);
+  display:flex; align-items:center; justify-content:center;
+}
+.hero-icon svg{filter: drop-shadow(0 0 12px rgba(76,195,255,.28))}
+
+/* Hero SVG stroke (otherwise the icon looks blank) */
+.stroke{
+  stroke: rgba(255,255,255,0.85);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hero-icon .stroke{
+  stroke: rgba(76,195,255,0.95);
+  filter: drop-shadow(0 0 10px rgba(76,195,255,0.35));
+}
+
+.hero-row{display:flex; gap:16px; align-items:center}
+.hero-temp{
+  font-size:56px;
+  font-weight:850;
+  line-height:1;
+  letter-spacing:-1px;
+}
+.hero-meta{margin-top:8px; color:var(--mut); font-size:13px}
+.hero-meta strong{color:var(--text)}
+
+.stat{
+  padding:16px 18px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.stat:last-child{border-bottom:none}
+.stat-label{font-size:12px; color:var(--mut)}
+.stat-value{margin-top:6px; font-size:20px; font-weight:750}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap:14px;
+}
+
+.card{
+  grid-column: span 6;
+  border:1px solid var(--stroke);
+  background:linear-gradient(180deg, rgba(20,26,38,.62), rgba(20,26,38,.30));
+  border-radius:var(--radius);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 16px 50px rgba(0,0,0,.32);
+  overflow:hidden;
+  position:relative;
+}
+.card::after{
+  content:"";
+  position:absolute; inset:-2px;
+  background: radial-gradient(600px 180px at 20% 0%, rgba(76,195,255,.12), transparent 60%),
+              radial-gradient(520px 200px at 80% 10%, rgba(41,242,166,.10), transparent 60%);
+  pointer-events:none;
+}
+.card-inner{position:relative; padding:16px 16px 14px; z-index:1}
+
+.card-head{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.card-title{display:flex; align-items:center; gap:10px}
+.badge{
+  width:36px; height:36px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow: var(--glow);
+}
+.badge svg{opacity:.95}
+.card-name{font-weight:800; letter-spacing:.2px}
+.card-sub{margin-top:2px; font-size:12px; color:var(--mut)}
+
+.tog{
+  display:flex; align-items:center; gap:10px;
+}
+.switch{
+  width:52px; height:30px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.25);
+  position:relative;
+  cursor:pointer;
+}
+.knob{
+  position:absolute; top:3px; left:3px;
+  width:24px; height:24px; border-radius:999px;
+  background:rgba(255,255,255,.82);
+  box-shadow: 0 10px 20px rgba(0,0,0,.35);
+  transition: transform .18s ease;
+}
+.switch.on{background:rgba(41,242,166,.18); border-color:rgba(41,242,166,.35)}
+.switch.on .knob{transform: translateX(22px)}
+
+.row{display:flex; gap:12px; align-items:center; margin-top:12px; flex-wrap:wrap}
+
+.pill{
+  display:flex; gap:10px; align-items:center;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.09);
+  background:rgba(255,255,255,.04);
+  border-radius:14px;
+}
+.pill label{font-size:12px; color:var(--mut)}
+.pill .val{font-weight:750}
+
+input[type=range]{
+  width:100%;
+  accent-color: var(--info);
+}
+
+.select, .num, .color{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.22);
+  color:var(--text);
+  border-radius:12px;
+  padding:10px 12px;
+  outline:none;
+}
+.select{min-width:210px}
+.num{width:110px}
+.color{width:54px; height:42px; padding:4px}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  border:none;
+  background:linear-gradient(135deg, rgba(76,195,255,.85), rgba(41,242,166,.75));
+  color:#06101a;
+  font-weight:800;
+  padding:11px 14px;
+  border-radius:14px;
+  cursor:pointer;
+  box-shadow: var(--glow);
+}
+.btn.ghost{
+  background:transparent;
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--text);
+  box-shadow:none;
+}
+.btn:active{transform: translateY(1px)}
+
+.small{font-size:12px}
+
+.footer{
+  margin-top:16px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+@media (max-width: 980px){
+  .hero{grid-template-columns:1fr}
+  .card{grid-column: span 12}
+  input[type=range]{width:160px}
+}
+
+/* ===== Layout polish: padding + spacing ===== */
+.wrap{
+  padding: 28px 28px 18px;   /* adds space from screen edges */
+  max-width: 1400px;         /* optional: keeps content centered */
+  margin: 0 auto;
+}
+
+.hero.card{
+  margin-bottom: 18px;
+}
+
+.grid{
+  padding: 10px 10px 24px;   /* inner padding around zone cards */
+  gap: 18px;                 /* space between cards */
+}
+
+.card{
+  padding: 18px;             /* more breathing room inside each card */
+  border-radius: 18px;
+}
+
+/* Keep footer aligned with grid padding */
+.footer{
+  margin-top: 14px;
+  padding: 12px 10px 22px;
+}
+
+/* ===== Modern Select (Combobox) ===== */
+select{
+  width: 100%;
+  height: 42px;
+  padding: 0 42px 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(10, 16, 24, 0.55);
+  color: rgba(255,255,255,0.92);
+  outline: none;
+  appearance: none;           /* remove native arrow */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25) inset;
+  cursor: pointer;
+}
+
+/* arrow icon */
+select{
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.65) 50%),
+    linear-gradient(135deg, rgba(255,255,255,0.65) 50%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04), transparent 60%);
+  background-position:
+    calc(100% - 18px) 17px,
+    calc(100% - 12px) 17px,
+    0 0;
+  background-size:
+    6px 6px,
+    6px 6px,
+    100% 100%;
+  background-repeat: no-repeat;
+}
+
+select:hover{
+  border-color: rgba(41, 242, 166, 0.35);
+}
+
+select:focus{
+  border-color: rgba(41, 242, 166, 0.65);
+  box-shadow: 0 0 0 3px rgba(41,242,166,0.15);
+}
+
+/* dropdown options */
+select option{
+  background: #0b1220;  /* dark */
+  color: rgba(255,255,255,0.92);
+}
+
+/* ===== Color input ===== */
+input[type="color"]{
+  width: 46px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(10,16,24,0.55);
+  padding: 0;
+  cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper{ padding: 6px; }
+input[type="color"]::-webkit-color-swatch{
+  border: none;
+  border-radius: 8px;
+}
+
+/* ===== Sliders ===== */
+input[type="range"]{
+  width: 100%;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.18);
+  outline: none;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb{
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(41,242,166,0.95);
+  box-shadow: 0 0 0 4px rgba(41,242,166,0.15), 0 8px 18px rgba(0,0,0,0.35);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb{
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(41,242,166,0.95);
+  box-shadow: 0 0 0 4px rgba(41,242,166,0.15), 0 8px 18px rgba(0,0,0,0.35);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track{
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.18);
+}
+
+.kv{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.kv-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kv-label{
+  font-size: 12px;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 6px;
+}
+
+/* Card header right side: ON + button in one row */
+.card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.card-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap: nowrap;      /* <- keep in one row */
+  white-space: nowrap;
+}
+
+/* If your badge is taller, keep it centered with button */
+.card-actions .badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height: 34px;
+  min-width: 44px;
+}
+
+/* Ensure small buttons don’t wrap */
+.card-actions .btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  flex: 0 0 auto;
+}
+
+
+/* ===== Slider rows: keep value pill on SAME line as slider ===== */
+.row{
+  display: grid;
+  grid-template-columns: 130px 1fr 88px;  /* label | slider | value */
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* your sliderRow() uses .label and .pill */
+.row .label{
+  font-weight: 650;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+}
+
+.row input[type="range"]{
+  width: 100%;
+}
+
+.row .pill{
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px){
+  .row{
+    grid-template-columns: 1fr;   /* stack nicely on tiny screens */
+  }
+}
+
+/* ===== Hero area fix ===== */
+.hero.card{
+  padding: 18px;
+}
+
+.hero{
+  grid-template-columns: 1.4fr .6fr;
+  gap: 16px;
+  margin: 16px 0 18px;
+}
+
+/* Left panel: icon + text in a row */
+.hero-left{
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 160px;              /* prevents huge empty height */
+}
+
+/* Make the icon look intentional */
+.hero-icon{
+  flex: 0 0 auto;
+  width: 78px;
+  height: 78px;
+  border-radius: 22px;
+}
+
+/* Text sizing */
+.hero-kicker{
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+  margin-bottom: 4px;
+}
+
+.hero-title{
+  font-size: 24px;
+  font-weight: 850;
+  letter-spacing: .2px;
+  margin-bottom: 6px;
+}
+
+.hero-sub{
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.35;
+  max-width: 520px;
+}
+
+/* Right panel: clean stats */
+.hero-right{
+  padding: 0;
+  min-height: 160px;
+}
+
+.stat{
+  padding: 16px 18px;
+  display:flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-label{
+  font-size: 12px;
+  color: rgba(255,255,255,0.60);
+}
+
+.stat-value{
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 850;
+}
+
+/* Responsive */
+@media (max-width: 980px){
+  .hero{ grid-template-columns: 1fr; }
+  .hero-left, .hero-right{ min-height: auto; }
+  .hero-left{ align-items: flex-start; }
+}
+
+
+/* =========================
+   OVERRIDES (APPEND AT END)
+   ========================= */
+
+/* Topbar status: keep in ONE row */
+.status{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:nowrap;
+}
+@media (max-width: 720px){
+  .status{ flex-wrap:wrap; } /* allow wrap only on small screens */
+}
+
+/* Make All Zones card full row always */
+.allzones{ grid-column: 1 / -1; } /* full 12 columns */
+
+/* Put ON + Turn Off in same row (right side) */
+.card-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:nowrap;
+}
+
+/* Slider: value pill must be on SAME row as slider */
+.slider-row{
+  display:grid;
+  grid-template-columns: 140px 1fr auto;
+  align-items:center;
+  gap:12px;
+  margin-top:12px;
+}
+.slider-row input[type="range"]{
+  width:100%;
+}
+.slider-pill{
+  min-width: 74px;
+  justify-content:center;
+  text-align:center;
+}
+
+/* better on small screens */
+@media (max-width: 520px){
+  .slider-row{
+    grid-template-columns: 1fr;
+  }
+  .slider-pill{
+    justify-content:flex-start;
+    min-width:auto;
+  }
+}
+
+/* Grid padding around zones (overall breathing room) */
+.grid{
+  padding: 12px 12px 24px;
+  gap: 18px;
+}
+
+/* Card inner spacing (if your HTML uses card-body) */
+.card-body{
+  padding-top: 14px;
+}
+
+/* Ensure dot looks like a status indicator */
+#dot-net{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  display:inline-block;
+}
+
+/* Badge svg alignment */
+.badge svg{
+  display:block;
+}
