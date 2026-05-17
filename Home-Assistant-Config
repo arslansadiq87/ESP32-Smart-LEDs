@@ -1,0 +1,125 @@
+# Copy this file into your Home Assistant config as:
+# 
+#
+# If packages are not enabled yet, add this to configuration.yaml:
+# homeassistant:
+#   packages: !include_dir_named packages
+
+rest:
+  - resource: "http://rgb.local/api/status"
+    scan_interval: 5
+    timeout: 5
+    sensor:
+      - name: "RGB Controller Status"
+        unique_id: rgb_controller_status
+        value_template: "{{ value_json.ip }}"
+        json_attributes:
+          - ip
+          - patterns
+          - all
+          - zones
+
+rest_command:
+  rgb_all_on:
+    url: "http://rgb.local/api/cmd"
+    method: post
+    content_type: "application/json"
+    payload: '{"all": true, "cmd": "ON"}'
+
+  rgb_all_off:
+    url: "http://rgb.local/api/cmd"
+    method: post
+    content_type: "application/json"
+    payload: '{"all": true, "cmd": "OFF"}'
+
+  rgb_all_brightness:
+    url: "http://rgb.local/api/cmd"
+    method: post
+    content_type: "application/json"
+    payload: '{"all": true, "brightness_ha": {{ brightness }}}'
+
+  rgb_all_pattern:
+    url: "http://rgb.local/api/cmd"
+    method: post
+    content_type: "application/json"
+    payload: '{"all": true, "pattern": "{{ pattern }}"}'
+
+  rgb_all_color:
+    url: "http://rgb.local/api/cmd"
+    method: post
+    content_type: "application/json"
+    payload: '{"all": true, "pattern": "SOLID", "hue": {{ hue }}, "saturation": {{ saturation }}}'
+
+  rgb_all_color_rgb:
+    url: "http://rgb.local/api/cmd"
+    method: post
+    content_type: "application/json"
+    payload: '{"all": true, "pattern": "SOLID", "r": {{ r }}, "g": {{ g }}, "b": {{ b }}}'
+
+  rgb_save:
+    url: "http://rgb.local/api/save"
+    method: post
+    content_type: "application/json"
+    payload: "{}"
+
+template:
+  - light:
+      - name: "RGB Lights"
+        unique_id: rgb_lights
+        icon: mdi:led-strip-variant
+        optimistic: true
+        availability: "{{ has_value('sensor.rgb_controller_status') and state_attr('sensor.rgb_controller_status', 'all') is not none }}"
+        state: >
+          {% set all = state_attr('sensor.rgb_controller_status', 'all') or {} %}
+          {{ all.get('on', false) }}
+        level: >
+          {% set all = state_attr('sensor.rgb_controller_status', 'all') or {} %}
+          {{ all.get('brightness_ha', 0) | int(0) }}
+        rgb: >
+          {% set all = state_attr('sensor.rgb_controller_status', 'all') or {} %}
+          ({{ all.get('red', 0) }}, {{ all.get('green', 0) }}, {{ all.get('blue', 0) }})
+        hs: >
+          {% set all = state_attr('sensor.rgb_controller_status', 'all') or {} %}
+          ({{ all.get('hue', 0) }}, {{ all.get('saturation', 0) }})
+        effect: >
+          {% set all = state_attr('sensor.rgb_controller_status', 'all') or {} %}
+          {{ all.get('pattern_name', 'SOLID') }}
+        effect_list: "{{ state_attr('sensor.rgb_controller_status', 'patterns') or [] }}"
+        turn_on:
+          action: rest_command.rgb_all_on
+        turn_off:
+          action: rest_command.rgb_all_off
+        set_level:
+          action: rest_command.rgb_all_brightness
+          data:
+            brightness: "{{ brightness | int(0) }}"
+        set_hs:
+          action: rest_command.rgb_all_color
+          data:
+            hue: "{{ h | float(0) }}"
+            saturation: "{{ s | float(0) }}"
+        set_rgb:
+          action: rest_command.rgb_all_color_rgb
+          data:
+            r: "{{ r | int(0) }}"
+            g: "{{ g | int(0) }}"
+            b: "{{ b | int(0) }}"
+        set_effect:
+          action: rest_command.rgb_all_pattern
+          data:
+            pattern: "{{ effect }}"
+
+  - select:
+      - name: "RGB Pattern"
+        unique_id: rgb_pattern
+        icon: mdi:animation-play
+        optimistic: true
+        availability: "{{ has_value('sensor.rgb_controller_status') and state_attr('sensor.rgb_controller_status', 'all') is not none }}"
+        state: >
+          {% set all = state_attr('sensor.rgb_controller_status', 'all') or {} %}
+          {{ all.get('pattern_name', 'SOLID') }}
+        options: "{{ state_attr('sensor.rgb_controller_status', 'patterns') or [] }}"
+        select_option:
+          - action: rest_command.rgb_all_pattern
+            data:
+              pattern: "{{ option }}"
